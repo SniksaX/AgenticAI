@@ -1,148 +1,86 @@
 # AI Code Documentation Agent
 
-[![Python Version](https://imgshields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
+[![Python Version](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI Version](https://img.shields.io/badge/FastAPI-0.109.0-009688.svg)](https://fastapi.tiangolo.com/)
 [![LangChain Version](https://img.shields.io/badge/LangChain-0.1.0-FF4154.svg)](https://www.langchain.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-This repository contains the source code for an AI-powered agent designed to automatically generate documentation and validated executable examples for Python code. The system is built with FastAPI and leverages the LangChain ReAct framework to enable a sophisticated reasoning and self-correction loop.
+This is an intelligent API that automatically generates documentation and **verifiably correct** examples for any Python code snippet you provide.
 
-## Table of Contents
+The key feature is its **self-correction loop**: if the AI generates an example that fails, it analyzes the error, fixes its own code, and tries again until it works.
 
-- [Architectural Overview](#architectural-overview)
-- [Core Features](#core-features)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-- [Usage](#usage)
-  - [Running the Application](#running-the-application)
-  - [API Endpoint Reference](#api-endpoint-reference)
-- [Testing](#testing)
-- [Project Structure](#project-structure)
-- [Contributing](#contributing)
-- [License](#license)
+## Demonstration: Input vs. Output
 
-## Architectural Overview
+Give the API a function with a bug...
 
-The application exposes a single API endpoint that accepts a Python code snippet. This snippet is processed by a LangChain agent that iteratively analyzes the code, drafts documentation, generates an example, and validates that example within a sandboxed execution environment. The agent corrects its own output based on execution feedback until a valid example is produced.
+#### Input (`POST /process-code`)
 
-The data flow is as follows:
-
-```mermaid
-graph TD
-    A[Client Request: POST /process-code] --> B[FastAPI Application: main.py]
-    B --> C{Agent Core: agent_core.py}
-    C --> D[LangChain AgentExecutor]
-    D -- 1. Analyze --> E[Tool: CodeAnalyzer]
-    E -- Analysis --> D
-    D -- 2. Draft --> F(Agent LLM Brain)
-    F -- Drafted Example --> D
-    D -- 3. Validate --> G[Tool: CodeExecutionEnvironment]
-    G -- Execution Result (Error) --> D
-    D -- 4. Self-Correct --> F
-    F -- Corrected Example --> D
-    D -- 5. Re-Validate --> G
-    G -- Execution Result (Success) --> D
-    D -- 6. Finalize --> H[Generate Final Answer]
-    H --> B
-    B --> I[JSON Response to Client]
-Core Features
-ReAct Agent Framework: Utilizes a Reason-Act loop, allowing the agent to make decisions, execute tools, and observe outcomes to inform its next steps.
-Sandboxed Code Execution: Integrates a secure, sandboxed environment to execute agent-generated code, providing direct feedback for validation and self-correction.
-Dynamic Error Correction: The agent is explicitly prompted to analyze execution errors (NameError, SyntaxError, etc.) and revise its code until it runs successfully.
-Modular Tooling: The agent's capabilities are defined by a set of distinct, testable tools for code analysis and execution.
-RESTful API: A robust API built with FastAPI, including automated OpenAPI (Swagger) documentation.
-Getting Started
-Prerequisites
-Python 3.9 or later
-An OpenAI API Key
-Installation
-Clone the repository:
-code
-Bash
-git clone https://github.com/your-username/ai-code-doc-agent.git
-cd ai-code-doc-agent
-Create and activate a Python virtual environment:
-code
-Bash
-python -m venv venv
-source venv/bin/activate
-On Windows, use .\venv\Scripts\activate
-Install the required dependencies:
-code
-Bash
-pip install -r requirements.txt
-(Note: If a requirements.txt file is not present, generate it via pip freeze > requirements.txt)
-Configure environment variables:
-Create a .env file in the project's root directory and add your OpenAI API key:
-code
-Env
-OPENAI_API_KEY="sk-..."
-Usage
-Running the Application
-Execute the following command from the root directory to start the Uvicorn server:
-code
-Bash
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-The API is now accessible at http://localhost:8000.
-API Endpoint Reference
-POST /process-code
-This endpoint processes a Python code snippet and returns generated documentation and a validated example.
-Request Body:
-code
-JSON
+```json
 {
-  "code_snippet": "def example_function(param1: int):\n    return param1 * 2"
+  "code_snippet": "def get_user_initials(name: str):\n    # Bug: this will fail on single names\n    parts = name.split()\n    return f\"{parts}{parts}\""
 }
-Success Response (200 OK):
+...and get back fixed, documented, and validated code.
+Output (200 OK)
 code
 JSON
 {
   "status": "success",
-  "documentation": "Generated documentation text...",
-  "example_code": "Validated example code...",
-  "agent_trace": "The agent's internal thought process..."
+  "documentation": "The `get_user_initials` function now correctly handles single names and includes a validated example.",
+  "example_code": "def get_user_initials(name: str):\n    \"\"\"\n    Extracts the initials from a full name.\n\n    Handles both single names and multi-part names gracefully.\n\n    Args:\n        name (str): The input name (e.g., 'John Doe' or 'Alice').\n\n    Returns:\n        str: The initials (e.g., 'JD' or 'A').\n    \"\"\"\n    parts = name.split()\n    if len(parts) >= 2:\n        return f\"{parts}{parts[-1]}\"\n    elif parts:\n        return f\"{parts}\"\n    return \"\"\n\n# --- Validated Example ---\nprint(get_user_initials('Taylor Swift'))\nprint(get_user_initials('Beyonce'))",
+  "agent_trace": "Thought: The initial code will raise an IndexError for a name like 'Cher'. I must add a check for the length of 'parts'. I will draft a corrected version and then validate it with the CodeExecutionEnvironment tool..."
 }
-Error Response (500 Internal Server Error):
-code
-JSON
-{
-  "detail": "An internal server error occurred: [Error details]"
-}
-You can interact with the live API and view the auto-generated documentation via Swagger UI at http://localhost:8000/docs.
-Testing
-This project uses pytest for unit testing the agent's tools.
-To run the test suite, execute the following command from the root directory:
+How It Works: The Self-Correction Loop
+This isn't just a simple prompt to an LLM. The agent follows a strict, iterative process defined by the ReAct (Reason + Act) framework:
+Analyze: The agent first uses a CodeAnalyzer tool to understand the input code's purpose and identify potential flaws.
+Draft: It writes documentation and an example to demonstrate the code's usage.
+Validate: It executes the example in a sandboxed CodeExecutionEnvironment. This is the most critical step.
+Observe & Repeat:
+On Failure: The agent gets the exact error message (IndexError, TypeError, etc.). It is prompted to think about the error, revise its code, and go back to step 3.
+On Success: The agent confirms the example is valid and proceeds to the final step.
+Finalize: Only after successful validation does the agent package the documentation and working code into the final response.
+Quickstart
+1. Clone & Setup
 code
 Bash
-pytest```
+git clone https://github.com/your-username/ai-code-doc-agent.git
+cd ai-code-doc-agent
 
-## Project Structure
-.
-├── .env # Environment variables (not version controlled)
-├── agent_logs.log # Log file for agent activity
-├── main.py # FastAPI application entry point
-├── README.md # This file
-├── requirements.txt # Project dependencies
-├── src
-│ ├── init.py
-│ ├── agent_core.py # Core agent logic, prompts, and executor
-│ ├── models.py # Pydantic models for API data contracts
-│ └── tools.py # Agent's custom tools
-└── tests
-├── init.py
-└── test_tools.py # Unit tests for the custom tools
+# Create and activate a virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: .\venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+2. Configure API Key
+Create a .env file in the root directory and add your OpenAI key:
 code
-Code
-## Contributing
-
-Contributions to this project are welcome. Please adhere to the following guidelines:
-1.  Fork the repository.
-2.  Create a new branch for your feature or bug fix.
-3.  Commit your changes with clear, descriptive messages.
-4.  Ensure all tests pass before submitting.
-5.  Open a pull request for review.
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+Env
+OPENAI_API_KEY="sk-..."
+3. Run the Server
+code
+Bash
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+The API is now running. Open http://localhost:8000/docs for the interactive Swagger UI.
+API Usage
+Send a POST request to the /process-code endpoint.
+curl Example
+code
+Bash
+curl -X POST "http://localhost:8000/process-code" \
+-H "Content-Type: application/json" \
+-d '{
+    "code_snippet": "def add(a, b): return a + b"
+}'
+Core Components
+main.py: The FastAPI application. Defines the /process-code endpoint and handles HTTP logic.
+src/agent_core.py: The brain of the project. It sets up the LangChain agent, defines the main ReAct prompt, and orchestrates the tool-using loop.
+src/tools.py: Contains the custom tools the agent can use:
+CodeAnalyzer: Intelligently inspects code.
+CodeExecutionEnvironment: The secure sandbox for running and validating Python code.
+Running Tests
+To ensure the tools work as expected, run the included pytest suite:
+code
+Bash
+pytest
+License
+This project is licensed under the MIT License.
