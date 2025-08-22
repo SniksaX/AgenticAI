@@ -1,6 +1,6 @@
 # AI Code Documentation Agent
 
-[![Python Version](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
+[![Python Version](https://imgshields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI Version](https://img.shields.io/badge/FastAPI-0.109.0-009688.svg)](https://fastapi.tiangolo.com/)
 [![LangChain Version](https://img.shields.io/badge/LangChain-0.1.0-FF4154.svg)](https://www.langchain.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -45,7 +45,7 @@ graph TD
     G -- Execution Result (Success) --> D
     D -- 6. Finalize --> H[Generate Final Answer]
     H --> B
-    B --> I[Client Response: JSON Payload]
+    B --> I[JSON Response to Client]
 Core Features
 ReAct Agent Framework: Utilizes a Reason-Act loop, allowing the agent to make decisions, execute tools, and observe outcomes to inform its next steps.
 Sandboxed Code Execution: Integrates a secure, sandboxed environment to execute agent-generated code, providing direct feedback for validation and self-correction.
@@ -115,30 +115,34 @@ This project uses pytest for unit testing the agent's tools.
 To run the test suite, execute the following command from the root directory:
 code
 Bash
-pytest
-Project Structure
+pytest```
+
+## Project Structure
+.
+├── .env # Environment variables (not version controlled)
+├── agent_logs.log # Log file for agent activity
+├── main.py # FastAPI application entry point
+├── README.md # This file
+├── requirements.txt # Project dependencies
+├── src
+│ ├── init.py
+│ ├── agent_core.py # Core agent logic, prompts, and executor
+│ ├── models.py # Pydantic models for API data contracts
+│ └── tools.py # Agent's custom tools
+└── tests
+├── init.py
+└── test_tools.py # Unit tests for the custom tools
 code
 Code
-.
-├── .env                  # Environment variables (not version controlled)
-├── agent_logs.log        # Log file for agent activity
-├── main.py               # FastAPI application entry point
-├── README.md             # This file
-├── requirements.txt      # Project dependencies
-├── src
-│   ├── __init__.py
-│   ├── agent_core.py     # Core agent logic, prompts, and executor
-│   ├── models.py         # Pydantic models for API data contracts
-│   └── tools.py          # Agent's custom tools
-└── tests
-    ├── __init__.py
-    └── test_tools.py     # Unit tests for the custom tools
-Contributing
+## Contributing
+
 Contributions to this project are welcome. Please adhere to the following guidelines:
-Fork the repository.
-Create a new branch for your feature or bug fix.
-Commit your changes with clear, descriptive messages.
-Ensure all tests pass before submitting.
-Open a pull request for review.
-License
-This project is licensed under the MIT License. See the LICENSE file for details.
+1.  Fork the repository.
+2.  Create a new branch for your feature or bug fix.
+3.  Commit your changes with clear, descriptive messages.
+4.  Ensure all tests pass before submitting.
+5.  Open a pull request for review.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
