@@ -4,13 +4,13 @@
 
 ![alt text](https://img.shields.io/badge/Powered%20by-LangChain-f19939.svg)
 An AI-powered service that automatically generates documentation and validated, executable examples for Python code snippets.
- Core Features
+✨ Core Features
 Automated Docstrings: Analyzes Python functions to generate comprehensive, well-formatted docstrings.
 Example Generation: Creates simple, illustrative code examples to demonstrate usage.
 Self-Correction & Validation: A key feature—the agent executes its own generated examples in a sandboxed environment. If the code fails, it analyzes the error, corrects the code, and re-tests until it succeeds.
 API-Driven: Built with FastAPI, providing a clean, modern REST API for easy integration.
 Transparent Reasoning: The API can return the agent's full chain of thought, offering complete visibility into its analysis and decision-making process.
- How It Works
+🤖 How It Works
 This project uses a ReAct (Reasoning and Acting) agent built with the LangChain framework. The agent follows a strict, iterative process to ensure the quality of its output:
 Analyze: The agent first uses an CodeAnalyzer tool to understand the purpose, parameters, dependencies, and return values of the input code.
 Draft: Based on its analysis, it drafts a docstring and a simple example.
@@ -61,7 +61,7 @@ To ensure all components are working correctly, run the test suite:
 code
 Bash
 pytest
- API Usage
+💡 API Usage
 You can send a POST request to the /process-code endpoint to have the agent document your code.
 Example Request with curl
 code
