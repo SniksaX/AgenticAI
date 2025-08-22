@@ -1,4 +1,3 @@
-
 # AI Code Documentation Agent
 
 [![Python Version](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
@@ -142,3 +141,4 @@ Commit your changes with clear, descriptive messages.
 Ensure all tests pass before submitting.
 Open a pull request for review.
 License
+This project is licensed under the MIT License. See the LICENSE file for details.
